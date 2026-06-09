@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import websockets
+from websockets.exceptions import ConnectionClosed
 
 from relay_link.buffer import BufferedSyncQueue
 from relay_link.clients import ClientNode, ClientRegistry
@@ -80,6 +81,8 @@ class RelayDaemon:
             async for raw in websocket:
                 self.clients.touch(node_id, bytes_in=len(str(raw).encode("utf-8")))
                 await self._route_message(node_id, str(raw), websocket.send)
+        except ConnectionClosed as exc:
+            logger.info("client connection closed remote=%s reason=%s", remote, exc)
         finally:
             self.clients.remove(node_id)
             self._sockets.pop(node_id, None)

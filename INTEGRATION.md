@@ -16,7 +16,20 @@ Generate or update a macOS local controller daemon for Relay Link with these req
 
 ## Native Android Tablet Instructions
 
-Implement a foreground service with a persistent notification and a WebSocket client.
+The repository includes a native Android implementation in `android/`.
+
+One-shot setup:
+
+```bash
+scripts/android_one_shot.sh
+```
+
+Prerequisites:
+
+- Android device connected over Universal Serial Bus (USB).
+- USB debugging enabled.
+- Mac and Android device on the same local network after install.
+- Android Debug Bridge (`adb`) available.
 
 Minimum behavior:
 
@@ -29,3 +42,12 @@ Minimum behavior:
 
 Keep clipboard overwrites visible to the user. Silent clipboard replacement is a wonderful way to create confusion and then pretend it is synchronization.
 
+Current Android implementation:
+
+- Stores Mac IP, token, and display dimensions.
+- Starts a foreground service with a persistent notification.
+- Maintains a reconnecting OkHttp WebSocket.
+- Sends Android text clipboard changes to macOS.
+- Writes inbound Relay Link clipboard content into Android as text.
+- Sends pointer packets from an in-app touch pad.
+- Supports launch extras so the one-shot script can preconfigure and autostart it.

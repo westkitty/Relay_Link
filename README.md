@@ -8,6 +8,7 @@ It supports:
 - Pointer coordinate packets routed into macOS through Quartz Event Services.
 - A bounded buffered sync queue for inspecting inbound clipboard writes before release.
 - A small macOS menu bar controller for starting the daemon and opening logs.
+- A native Android starter app with one-command install and launch.
 
 ## Status
 
@@ -37,6 +38,12 @@ pip install -e ".[dev]"
 
 ```bash
 relay-link-daemon
+```
+
+If a local editable install leaves the console script stale, use the module entrypoint:
+
+```bash
+python -m relay_link.daemon
 ```
 
 Defaults:
@@ -124,14 +131,47 @@ System Settings -> Privacy & Security -> Accessibility
 
 ## Android Client Notes
 
-The Android tablet client should:
+The repository includes a native Android app under `android/`.
 
-1. Connect to `ws://<mac-lan-ip>:8765`.
-2. Send `hello` with role `tablet`.
-3. Listen for `clipboard` messages and write them into the Android clipboard.
-4. Watch the Android clipboard and send `clipboard` messages back to the host.
-5. Convert boundary gestures into `pointer` packets with macOS display coordinates.
-6. Use `queue:list`, `queue:release`, and `queue:discard` when manual release mode is active.
+Fast path, with an Android device connected over Universal Serial Bus (USB) and USB debugging enabled:
+
+```bash
+scripts/android_one_shot.sh
+```
+
+The script:
+
+1. Detects the Mac LAN IP.
+2. Creates the Python virtual environment if needed.
+3. Starts the Mac daemon on port `8765`.
+4. Builds and installs the Android debug app.
+5. Launches the app with host, token, display width, display height, and autostart extras.
+
+Useful overrides:
+
+```bash
+RELAY_LINK_TOKEN="change-this" \
+RELAY_LINK_MAC_IP="192.168.1.20" \
+RELAY_LINK_MAC_WIDTH="1728" \
+RELAY_LINK_MAC_HEIGHT="1117" \
+scripts/android_one_shot.sh
+```
+
+Manual Android behavior:
+
+1. Enter the Mac IP address.
+2. Enter the shared token.
+3. Enter the Mac display width and height.
+4. Tap `Save and Start Relay`.
+5. Keep the app visible for the most reliable clipboard watching on modern Android.
+6. Use the pointer pad to send macOS pointer packets.
+
+Android clipboard limits:
+
+- Text clipboard sync is implemented.
+- Inbound image data URLs are preserved as clipboard text.
+- Native Android image clipboard insertion needs a `ContentProvider` and file grants; that is intentionally not hidden behind fake magic.
+- Android may restrict background clipboard reads. The foreground service keeps the socket alive, but clipboard watching is most reliable while Relay Link is visible.
 
 ## Development
 
@@ -139,5 +179,5 @@ The Android tablet client should:
 pytest tests/ -x -q
 ruff check .
 ruff format --check .
+cd android && ./gradlew testDebugUnitTest assembleDebug
 ```
-

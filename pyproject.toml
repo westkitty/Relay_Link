@@ -24,6 +24,9 @@ dev = [
 relay-link-daemon = "relay_link.daemon:main"
 relay-link-menubar = "relay_link.menubar:main"
 
+[tool.setuptools.packages.find]
+include = ["relay_link*"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
@@ -34,4 +37,3 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "ASYNC"]
-
