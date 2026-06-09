@@ -23,6 +23,7 @@ dev = [
 [project.scripts]
 relay-link-daemon = "relay_link.daemon:main"
 relay-link-menubar = "relay_link.menubar:main"
+relay-link-one-shot = "relay_link.one_shot:main"
 
 [tool.setuptools.packages.find]
 include = ["relay_link*"]

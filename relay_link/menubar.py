@@ -1,18 +1,22 @@
 import json
-import socket
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 
-def _daemon_command() -> list[str]:
-    return [sys.executable, "-m", "relay_link.daemon"]
+def _one_shot_command() -> list[str]:
+    return [sys.executable, "-m", "relay_link.one_shot"]
 
 
-def _is_port_open(host: str = "127.0.0.1", port: int = 8765) -> bool:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.settimeout(0.25)
-        return sock.connect_ex((host, port)) == 0
+def _is_port_open() -> bool:
+    result = subprocess.run(
+        ["lsof", "-nP", "-iTCP", "-sTCP:LISTEN"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return ":8765" in result.stdout
 
 
 def _open_logs() -> None:
@@ -20,16 +24,23 @@ def _open_logs() -> None:
     subprocess.run(["open", str(log_path.parent)], check=False)
 
 
-def _launch_daemon() -> None:
-    log_path = Path.home() / "Library" / "Logs" / "relay-link.log"
+def _run_detached(command: list[str]) -> None:
+    log_path = Path.home() / "Library" / "Logs" / "relay-link-menubar.log"
     log_path.parent.mkdir(parents=True, exist_ok=True)
+    env = os.environ.copy()
+    env.setdefault("RELAY_LINK_ROOT", str(Path.cwd()))
     with log_path.open("a") as log_file:
         subprocess.Popen(
-            [*_daemon_command(), "--log-level", "INFO"],
+            command,
             stdout=log_file,
             stderr=log_file,
             start_new_session=True,
+            env=env,
         )
+
+
+def _launch_daemon() -> None:
+    _run_detached([*_one_shot_command(), "--mac-only"])
 
 
 def _print_status() -> None:
@@ -47,10 +58,20 @@ def _run_rumps() -> None:
         def __init__(self) -> None:
             super().__init__("Relay Link")
             self.menu = [
-                rumps.MenuItem("Start Daemon", callback=self.start_daemon),
+                rumps.MenuItem("Launch Mac + Android", callback=self.launch_all),
+                rumps.MenuItem("Launch Android App", callback=self.launch_android),
+                rumps.MenuItem("Start Mac Daemon", callback=self.start_daemon),
                 rumps.MenuItem("Open Logs", callback=self.open_logs),
                 rumps.MenuItem("Refresh Status", callback=self.refresh_status),
             ]
+            self.refresh_status(None)
+
+        def launch_all(self, _: object) -> None:
+            _run_detached(_one_shot_command())
+            self.title = "Relay Link: Launching"
+
+        def launch_android(self, _: object) -> None:
+            _run_detached([*_one_shot_command(), "--android-only"])
             self.refresh_status(None)
 
         def start_daemon(self, _: object) -> None:

@@ -112,10 +112,27 @@ Queue inspection:
 Start the menu bar utility:
 
 ```bash
-relay-link-menubar
+scripts/launch_menubar.sh
 ```
 
-The menu shows whether port `8765` is reachable, can start the daemon, and can open `~/Library/Logs/relay-link.log`.
+The menu shows whether port `8765` is reachable and can:
+
+- Launch Mac + Android through the one-shot installer.
+- Launch the Android app on a connected tablet through Android Debug Bridge (`adb`).
+- Start the Mac daemon.
+- Open Relay Link logs.
+
+If the menu bar app is started outside the repository, set `RELAY_LINK_ROOT` first:
+
+```bash
+RELAY_LINK_ROOT="/path/to/Relay_Link" relay-link-menubar
+```
+
+Stop the menu bar controller:
+
+```bash
+launchctl bootout "gui/$(id -u)" "$HOME/Library/LaunchAgents/com.westkitty.relaylink.menubar.plist"
+```
 
 ## macOS Permissions
 

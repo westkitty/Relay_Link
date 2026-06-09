@@ -10,6 +10,7 @@ TOKEN="${RELAY_LINK_TOKEN:-relay-link-local}"
 MAC_WIDTH="${RELAY_LINK_MAC_WIDTH:-1440}"
 MAC_HEIGHT="${RELAY_LINK_MAC_HEIGHT:-900}"
 MAC_IP="${RELAY_LINK_MAC_IP:-}"
+SKIP_ANDROID="${RELAY_LINK_SKIP_ANDROID:-0}"
 
 daemon_is_listening() {
   lsof -nP -iTCP -sTCP:LISTEN 2>/dev/null | grep -Fq "$MAC_IP:8765"
@@ -77,6 +78,12 @@ fi
 if ! daemon_is_listening; then
   echo "Mac daemon did not bind port 8765. See $LOG_DIR/relay-link.log." >&2
   exit 1
+fi
+
+if [[ "$SKIP_ANDROID" == "1" ]]; then
+  echo "Relay Link Mac daemon launched."
+  echo "Mac WebSocket: ws://$MAC_IP:8765"
+  exit 0
 fi
 
 if ! adb get-state >/dev/null 2>&1; then
